@@ -81,7 +81,15 @@ app.post("/logout", (req, res) => {
   res.clearCookie('username', req.body.username);
   res.redirect('/urls')
 });
+
+app.get("/register", (req, res) => {
+  res.render("register");
+});
+
+// app.post("/register", (req, res) => {
+
+// });
   
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}`);
+  console.log(`TinyApp listening on port ${PORT}`);
 });
