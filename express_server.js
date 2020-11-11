@@ -10,6 +10,8 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {};
+
 const generateRandomString = () => {
   return Math.random().toString(36).substr(2, 6);
 };
@@ -86,9 +88,20 @@ app.get("/register", (req, res) => {
   res.render("register");
 });
 
-// app.post("/register", (req, res) => {
+app.post("/register", (req, res) => {
+  const id = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+  
+  users[id] = id;
+  users[id] = { id, email, password};
 
-// });
+  res.cookie('user_id', id);
+
+  console.log(users);
+
+  res.redirect('/urls')
+});
   
 app.listen(PORT, () => {
   console.log(`TinyApp listening on port ${PORT}`);
