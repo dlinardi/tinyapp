@@ -1,7 +1,9 @@
 const express = require('express');
 const app = express();
 const PORT = 8080;
+
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser')
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -66,6 +68,12 @@ app.get("/urls/:shortURL", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
+});
+
+app.post("/login", (req, res) => {
+  console.log(req.body.username);
+  res.cookie('username', req.body.username);
+  res.redirect('/urls')
 });
   
 app.listen(PORT, () => {
