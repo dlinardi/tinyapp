@@ -7,11 +7,17 @@ const app = express();
 const PORT = 8080;
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "aJ48lW" },
+  "9sm5xK": { longURL: "http://www.google.com", userID: "aJ48lW" }
 };
 
-const users = {};
+const users = {
+  "aJ48lW": {
+    id: "aJ48lW",
+    email: "example@example.org",
+    password: "i-like-turtles"
+  }
+};
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -35,7 +41,12 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = { user_id: users[req.cookies["user_id"]] };
-  res.render("urls_new", templateVars);
+
+  if (templateVars.user_id) {
+    res.render("urls_new", templateVars);
+  }
+
+  res.redirect("/login");
 });
 
 app.post("/urls", (req, res) => {
@@ -59,7 +70,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { user_id: users[req.cookies["user_id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const templateVars = { user_id: users[req.cookies["user_id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
 
   if (urlDatabase[req.params.shortURL]) {
     res.render("urls_show", templateVars);
@@ -69,7 +80,7 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
