@@ -18,4 +18,18 @@ const checkUserExists = (userDB, email) => {
   return false;
 };
 
-module.exports = { generateRandomString, validateInput, checkUserExists };
+const authenticateUser = (userDB, password) => {
+  for (const id in userDB) {
+    if (userDB[id].password === password) {
+      return id;
+    }
+  }
+  return false;
+};
+
+module.exports = {
+  generateRandomString,
+  validateInput,
+  checkUserExists,
+  authenticateUser
+};

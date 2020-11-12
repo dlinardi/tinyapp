@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
-const { generateRandomString, validateInput, checkUserExists } = require('./helpers')
+const { generateRandomString, validateInput, checkUserExists, authenticateUser } = require('./helpers');
 
 const app = express();
 const PORT = 8080;
@@ -14,7 +14,7 @@ const urlDatabase = {
 const users = {};
 
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser())
+app.use(cookieParser());
 
 app.set('view engine', 'ejs');
 
@@ -26,13 +26,16 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+// URL ROUTES
+
 app.get("/urls", (req, res) => {
   const templateVars = { user_id: users[req.cookies["user_id"]], urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { user_id: users[req.cookies["user_id"]] };
+  res.render("urls_new", templateVars);
 });
 
 app.post("/urls", (req, res) => {
@@ -44,7 +47,6 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// update url
 app.post("/urls/:shortURL/", (req, res) => {
   const newURL = req.body.newURL;
   urlDatabase[req.params.shortURL] = newURL;
@@ -74,19 +76,37 @@ app.get("/u/:shortURL", (req, res) => {
 // LOGIN ROUTES
 
 app.get("/login", (req, res) => {
-  const templateVars = { user_id: users[req.cookies["user_id"]] }
-  res.render("login", templateVars)
+  const templateVars = { user_id: users[req.cookies["user_id"]] };
+  res.render("login", templateVars);
 });
+
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+
+  // error handling functions
+  const userExists = checkUserExists(users, email);
+  const userAuthenticated = authenticateUser(users, password);
+  
+  if (!userExists || !userAuthenticated) {
+    return res.status(403).send('Forbidden, please enter a valid email and password.');
+  }
+  
+  const id = userAuthenticated;
+
+  res.cookie('user_id', id);
+  res.redirect('/urls');
+});
+
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id', req.body.user_id);
-  res.redirect('/urls')
+  res.redirect('/urls');
 });
 
 // REGISTER ROUTES
 
 app.get("/register", (req, res) => {
-  const templateVars = { user_id: users[req.cookies["user_id"]] }
+  const templateVars = { user_id: users[req.cookies["user_id"]] };
   res.render("register", templateVars);
 });
 
@@ -98,20 +118,21 @@ app.post("/register", (req, res) => {
   const badInput = validateInput(email, password);
   const userExists = checkUserExists(users, email);
 
+
   if (badInput) {
-    res.sendStatus(400);
+    res.status(400).send('Bad Request, please enter a valid email and password.');
   } else if (userExists) {
-    res.sendStatus(400);
-  } else {
-    users[id] = id;
-    users[id] = { id, email, password};  
-  
-    console.log(users);
-    res.cookie('user_id', id);
+    res.status(400).send('Bad Request, user already exists.');
   }
+
+  users[id] = { id, email, password};
+
+  res.cookie('user_id', id);
+  
+  console.log(users);
   res.redirect('/urls');
 });
-  
+
 app.listen(PORT, () => {
   console.log(`TinyApp listening on port ${PORT}`);
 });
