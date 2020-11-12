@@ -11,16 +11,16 @@
       </div>
       
       <% if (!user_id) { %>
-      <form class="form-inline ml-auto" method="POST" action="/login">
+      <form class="form-inline ml-auto" method=GET action="/login">
       <% } else { %>
       <form class="form-inline ml-auto" method="POST" action="/logout">
       <% } %>
         <div class="form-row">
           <% if (!user_id) { %>
-            <input class="form-control" style="margin-right: 10px;" type="text" name="username" placeholder="Username">
-            <button type="submit" class="btn btn-outline-dark">Sign In</button>
+            <button type="submit" class="btn btn-success">Login</button>
+            <button type="submit" class="btn btn-success">Register</button>
           <% } else { %>
-            <label style="margin-right: 10px;" for="username">Logged in as: <%= user_id.email %>. </label>
+            <!--<label style="margin-right: 10px;" for="username">Logged in as: <%=// user_id.email %>. </label>-->
             <button type="submit" class="btn btn-outline-danger">Logout</button>
           <% } %>
         </div>
