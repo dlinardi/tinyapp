@@ -73,11 +73,10 @@ app.get("/u/:shortURL", (req, res) => {
 
 // LOGIN ROUTES
 
-// app.post("/login", (req, res) => {
-//   console.log('New user:', req.body.username);
-//   res.cookie('username', req.body.username);
-//   res.redirect('/urls')
-// });
+app.get("/login", (req, res) => {
+  const templateVars = { user_id: users[req.cookies["user_id"]] }
+  res.render("login", templateVars)
+});
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id', req.body.user_id);
@@ -87,7 +86,8 @@ app.post("/logout", (req, res) => {
 // REGISTER ROUTES
 
 app.get("/register", (req, res) => {
-  res.render("register");
+  const templateVars = { user_id: users[req.cookies["user_id"]] }
+  res.render("register", templateVars);
 });
 
 app.post("/register", (req, res) => {
@@ -108,9 +108,8 @@ app.post("/register", (req, res) => {
   
     console.log(users);
     res.cookie('user_id', id);
-    
-    res.redirect('/urls')
   }
+  res.redirect('/urls');
 });
   
 app.listen(PORT, () => {
