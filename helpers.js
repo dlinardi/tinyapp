@@ -27,9 +27,20 @@ const authenticateUser = (userDB, password) => {
   return false;
 };
 
+const urlsForUser = (urlDB, id) => {
+  let userURLs = {};
+  for (const url in urlDB) {
+    if (urlDB[url].userID === id) {
+      userURLs[url] = { longURL: urlDB[url].longURL, userID: urlDB[url].userID };
+    }
+  }
+  return userURLs;
+};
+
 module.exports = {
   generateRandomString,
   validateInput,
   checkUserExists,
-  authenticateUser
+  authenticateUser,
+  urlsForUser
 };

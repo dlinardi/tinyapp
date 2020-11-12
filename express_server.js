@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
-const { generateRandomString, validateInput, checkUserExists, authenticateUser } = require('./helpers');
+const { generateRandomString, validateInput, checkUserExists, authenticateUser, urlsForUser } = require('./helpers');
 
 const app = express();
 const PORT = 8080;
@@ -35,37 +35,60 @@ app.get("/urls.json", (req, res) => {
 // URL ROUTES
 
 app.get("/urls", (req, res) => {
-  const templateVars = { user_id: users[req.cookies["user_id"]], urls: urlDatabase };
+  const id = req.cookies["user_id"];
+  const usersURLs = urlsForUser(urlDatabase, id);
+
+  const templateVars = { user_id: users[req.cookies["user_id"]], urls: usersURLs };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { user_id: users[req.cookies["user_id"]] };
+  const user_id = req.cookies["user_id"];
+  const templateVars = { user_id: users[user_id] };
 
-  if (templateVars.user_id) {
+  if (user_id) {
     res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
   }
 
-  res.redirect("/login");
 });
 
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
+  const user_id = req.cookies.user_id;
 
-  urlDatabase[shortURL] = longURL;
+  if (user_id) {
+    urlDatabase[shortURL] = { longURL, user_id };
+  }
 
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.post("/urls/:shortURL/", (req, res) => {
   const newURL = req.body.newURL;
-  urlDatabase[req.params.shortURL] = newURL;
+  const shortURL = req.params.shortURL;
+  const user_id = req.cookies["user_id"];
+
+  if (urlDatabase[shortURL].userID === user_id) {
+    urlDatabase[shortURL] = newURL;
+  } else {
+    return res.status(403).send('Forbidden, you are not the creator of this short URL.');
+  }
+
   res.redirect("/urls");
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
+  const shortURL = req.params.shortURL;
+
+  if (urlDatabase[shortURL].userID === req.cookies["user_id"]) {
+    delete urlDatabase[shortURL];
+  } else {
+    return res.status(403).send('Forbidden, you are not the creator of this short URL.');
+  }
+
   res.redirect("/urls");
 });
 
