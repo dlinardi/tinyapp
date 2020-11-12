@@ -1,3 +1,5 @@
+const bcrypt = require('bcrypt');
+
 const generateRandomString = () => {
   return Math.random().toString(36).substr(2, 6);
 };
@@ -20,7 +22,7 @@ const checkUserExists = (userDB, email) => {
 
 const authenticateUser = (userDB, password) => {
   for (const id in userDB) {
-    if (userDB[id].password === password) {
+    if (bcrypt.compareSync(password, userDB[id].password)) {
       return id;
     }
   }
@@ -31,7 +33,10 @@ const urlsForUser = (urlDB, id) => {
   let userURLs = {};
   for (const url in urlDB) {
     if (urlDB[url].userID === id) {
-      userURLs[url] = { longURL: urlDB[url].longURL, userID: urlDB[url].userID };
+      userURLs[url] = { 
+        longURL: urlDB[url].longURL,
+        userID: urlDB[url].userID
+      };
     }
   }
   return userURLs;
