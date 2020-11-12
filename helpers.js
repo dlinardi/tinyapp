@@ -11,7 +11,7 @@ const validateInput = (email, password) => {
   return false;
 };
 
-const fetchUser = (userDB, email) => {
+const getUserByEmail = (userDB, email) => {
   for (const userID in userDB) {
     if (userDB[userID].email === email) {
       return userDB[userID];
@@ -22,7 +22,7 @@ const fetchUser = (userDB, email) => {
 
 const authenticateUser = (userDB, email, password) => {
 
-  const user = fetchUser(userDB, email);
+  const user = getUserByEmail(userDB, email);
 
   if (user && bcrypt.compareSync(password, user.password)) {
     return user;
@@ -48,7 +48,7 @@ const urlsForUser = (urlDB, id) => {
 module.exports = {
   generateRandomString,
   validateInput,
-  fetchUser,
+  getUserByEmail,
   authenticateUser,
   urlsForUser
 };

@@ -6,7 +6,7 @@ const bcrypt = require('bcrypt');
 const { 
   generateRandomString,
   validateInput,
-  fetchUser,
+  getUserByEmail,
   authenticateUser,
   urlsForUser 
 } = require('./helpers');
@@ -157,7 +157,7 @@ app.post("/register", (req, res) => {
   const { email, password } = req.body;
 
   const badInput = validateInput(email, password);
-  const user = fetchUser(users, email);
+  const user = getUserByEmail(users, email);
   const hashedPassword = bcrypt.hashSync(password, 10);
 
   if (badInput) {
