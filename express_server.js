@@ -2,8 +2,15 @@ const express = require('express');
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcrypt');
-const { generateRandomString, validateInput, checkUserExists, authenticateUser, urlsForUser } = require('./helpers');
 
+const { 
+  generateRandomString,
+  validateInput,
+  fetchUser,
+  authenticateUser,
+  urlsForUser 
+} = require('./helpers');
+  
 const app = express();
 const PORT = 8080;
 
@@ -119,18 +126,14 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-
-  // error handling functions
-  const userExists = checkUserExists(users, email);
-  const userAuthenticated = authenticateUser(users, password);
   
-  if (!userExists || !userAuthenticated) {
+  const user = authenticateUser(users, email, password);
+  
+  if (!user) {
     return res.status(403).send('Forbidden, please enter a valid email and password.');
   }
   
-  const id = userAuthenticated;
-
-  res.cookie('user_id', id);
+  res.cookie('user_id', user.id);
   res.redirect('/urls');
 });
 
@@ -150,25 +153,22 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   const { email, password } = req.body;
 
+  const badInput = validateInput(email, password);
+  const user = fetchUser(users, email);
   const hashedPassword = bcrypt.hashSync(password, 10);
-
-  // error handling functions
-  const badInput = validateInput(email, hashedPassword);
-  const userExists = checkUserExists(users, email);
-
 
   if (badInput) {
     res.status(400).send('Bad Request, please enter a valid email and password.');
-  } else if (userExists) {
+  }
+
+  if (!user) {
+    users[id] = { id, email, password: hashedPassword };
+    res.cookie('user_id', id);
+    res.redirect('/urls');
+  } else {
     res.status(400).send('Bad Request, user already exists.');
   }
 
-  users[id] = { id, email, password: hashedPassword };
-
-  res.cookie('user_id', id);
-  
-  console.log(users);
-  res.redirect('/urls');
 });
 
 app.listen(PORT, () => {
