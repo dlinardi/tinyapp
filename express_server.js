@@ -1,9 +1,10 @@
 const express = require('express');
-const app = express();
-const PORT = 8080;
-
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const { generateRandomString, validateInput, checkUserExists } = require('./helpers')
+
+const app = express();
+const PORT = 8080;
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -12,13 +13,10 @@ const urlDatabase = {
 
 const users = {};
 
-const generateRandomString = () => {
-  return Math.random().toString(36).substr(2, 6);
-};
-
-app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser())
+
+app.set('view engine', 'ejs');
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -73,6 +71,8 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+// LOGIN ROUTES
+
 // app.post("/login", (req, res) => {
 //   console.log('New user:', req.body.username);
 //   res.cookie('username', req.body.username);
@@ -84,23 +84,33 @@ app.post("/logout", (req, res) => {
   res.redirect('/urls')
 });
 
+// REGISTER ROUTES
+
 app.get("/register", (req, res) => {
   res.render("register");
 });
 
 app.post("/register", (req, res) => {
   const id = generateRandomString();
-  const email = req.body.email;
-  const password = req.body.password;
+  const { email, password } = req.body;
+
+  // error handling functions
+  const badInput = validateInput(email, password);
+  const userExists = checkUserExists(users, email);
+
+  if (badInput) {
+    res.sendStatus(400);
+  } else if (userExists) {
+    res.sendStatus(400);
+  } else {
+    users[id] = id;
+    users[id] = { id, email, password};  
   
-  users[id] = id;
-  users[id] = { id, email, password};
-
-  res.cookie('user_id', id);
-
-  console.log(users);
-
-  res.redirect('/urls')
+    console.log(users);
+    res.cookie('user_id', id);
+    
+    res.redirect('/urls')
+  }
 });
   
 app.listen(PORT, () => {
