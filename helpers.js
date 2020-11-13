@@ -1,14 +1,12 @@
 const bcrypt = require('bcrypt');
 
-const generateRandomString = () => {
-  return Math.random().toString(36).substr(2, 6);
-};
+const generateRandomString = () => (Math.random().toString(36).substr(2, 6));
 
 const validateInput = (email, password) => {
-  if (email === '' || password === '') {
-    return true;
+  if (email || password) {
+    return false;
   }
-  return false;
+  return true;
 };
 
 const getUserByEmail = (userDB, email) => {
@@ -21,15 +19,13 @@ const getUserByEmail = (userDB, email) => {
 };
 
 const authenticateUser = (userDB, email, password) => {
-
   const user = getUserByEmail(userDB, email);
 
   if (user && bcrypt.compareSync(password, user.password)) {
     return user;
-  } else {
-    return false;
   }
-  
+
+  return false;
 };
 
 const urlsForUser = (urlDB, id) => {
@@ -45,6 +41,7 @@ const urlsForUser = (urlDB, id) => {
   return userURLs;
 };
 
+// comment about this
 const renderError = (res, user_id, status, error) => {
   res.status(status);
   return res.render('error', { status, error, user_id });
