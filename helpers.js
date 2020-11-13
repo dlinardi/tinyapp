@@ -36,7 +36,7 @@ const urlsForUser = (urlDB, id) => {
   let userURLs = {};
   for (const url in urlDB) {
     if (urlDB[url].userID === id) {
-      userURLs[url] = { 
+      userURLs[url] = {
         longURL: urlDB[url].longURL,
         userID: urlDB[url].userID
       };
@@ -45,10 +45,16 @@ const urlsForUser = (urlDB, id) => {
   return userURLs;
 };
 
+const renderError = (res, user_id, status, error) => {
+  res.status(status);
+  return res.render('error', { status, error, user_id });
+}
+
 module.exports = {
   generateRandomString,
   validateInput,
   getUserByEmail,
   authenticateUser,
-  urlsForUser
+  urlsForUser,
+  renderError
 };

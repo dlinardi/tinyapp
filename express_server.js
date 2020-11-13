@@ -1,14 +1,15 @@
 const express = require('express');
 const bodyParser = require("body-parser");
-var cookieSession = require('cookie-session')
+let cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 
-const { 
+const {
   generateRandomString,
   validateInput,
   getUserByEmail,
   authenticateUser,
-  urlsForUser 
+  urlsForUser,
+  renderError
 } = require('./helpers');
   
 const app = express();
@@ -31,12 +32,18 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
-}))
+}));
 
 app.set('view engine', 'ejs');
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  const user_id = req.session.user_id;
+
+  if (user_id) {
+    res.redirect('/urls')
+  } else {
+    res.redirect('/login')
+  }
 });
 
 app.get("/urls.json", (req, res) => {
@@ -80,12 +87,15 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { user_id: users[req.session.user_id], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+  const user_id = users[req.session.user_id];
 
   if (urlDatabase[req.params.shortURL]) {
+    const templateVars = { user_id, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
     res.render("urls_show", templateVars);
   } else {
-    res.send("That URL doesn't exit.");
+    const status = 403;
+    const error = 'Forbidden, the URL does not exist.';
+    renderError(res, user_id, 403, 'Forbidden, the URL does not exist.');
   }
 });
 
@@ -102,7 +112,9 @@ app.post("/urls/:shortURL/", (req, res) => {
   if (urlDatabase[shortURL].userID === user_id) {
     urlDatabase[shortURL] = { longURL: newURL, userID: user_id };
   } else {
-    return res.status(403).send('Forbidden, you are not the creator of this short URL.');
+    const status = 403;
+    const error = 'Forbidden, you are not the creator of this short URL.';
+    renderError(res, user_id, status, error);
   }
 
   res.redirect("/urls");
@@ -110,11 +122,14 @@ app.post("/urls/:shortURL/", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
+  const user_id = users[req.session.user_id];
 
   if (urlDatabase[shortURL].userID === req.session.user_id) {
     delete urlDatabase[shortURL];
   } else {
-    return res.status(403).send('Forbidden, you are not the creator of this short URL.');
+    const status = 403;
+    const error = 'Forbidden, you are not the creator of this short URL.';
+    renderError(res, user_id, status, error);
   }
 
   res.redirect("/urls");
@@ -133,7 +148,10 @@ app.post("/login", (req, res) => {
   const user = authenticateUser(users, email, password);
   
   if (!user) {
-    return res.status(403).send('Forbidden, please enter a valid email and password.');
+    const user_id = users[req.session.user_id];
+    const status = 403;
+    const error = 'Forbidden, please enter a valid email and password.';
+    renderError(res, user_id, status, error);
   }
   
   req.session.user_id = user.id;
@@ -161,7 +179,10 @@ app.post("/register", (req, res) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
 
   if (badInput) {
-    res.status(400).send('Bad Request, please enter a valid email and password.');
+    const user_id = users[req.session.user_id];
+    const status = 400;
+    const error = 'Bad Request, please enter a valid email and password.';
+    renderError(res, user_id, status, error);
   }
 
   if (!user) {
@@ -169,7 +190,10 @@ app.post("/register", (req, res) => {
     req.session.user_id = id;
     res.redirect('/urls');
   } else {
-    res.status(400).send('Bad Request, user already exists.');
+    const user_id = users[req.session.user_id];
+    const status = 400;
+    const error = 'Bad Request, user already exists.';
+    renderError(res, user_id, status, error);
   }
 
 });
