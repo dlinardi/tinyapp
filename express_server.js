@@ -1,5 +1,5 @@
 const express = require('express');
-const bodyParser = require("body-parser");
+const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 
@@ -41,9 +41,9 @@ app.get("/", (req, res) => {
   const { user_id } = req.session;
 
   if (user_id) {
-    res.redirect('/urls')
+    res.redirect("/urls");
   } else {
-    res.redirect('/login')
+    res.redirect("/login");
   }
 });
 
@@ -72,7 +72,7 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const user_id = req.session.user_id;
+  const { user_id } = req.session;
   const templateVars = { user_id: users[user_id] };
 
   if (user_id) {
@@ -85,29 +85,30 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const user_id = users[req.session.user_id];
+  const { shortURL } = req.params;
 
-  if (urlDatabase[req.params.shortURL]) {
-    const templateVars = { user_id, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
-    res.render("urls_show", templateVars);
+  if (user_id) {
+    if (urlDatabase[shortURL] && urlDatabase[shortURL].userID === user_id.id) {
+      const templateVars = { user_id, shortURL, longURL: urlDatabase[shortURL].longURL };
+      res.render("urls_show", templateVars);
+    } else {
+      renderError(res, user_id, 403, 'Forbidden, you do not have access to this URL.');
+    }
   } else {
-    const status = 403;
-    const error = 'Forbidden, the URL does not exist.';
-    renderError(res, user_id, status, error);
+    renderError(res, user_id, 403, 'Forbidden, please login or register.');
   }
 });
 
 app.post("/urls/:shortURL/", (req, res) => {
-  const newURL = req.body.newURL;
-  const shortURL = req.params.shortURL;
-  const user_id = req.session.user_id;
+  const { newURL } = req.body;
+  const { shortURL } = req.params;
+  const { user_id } = req.session;
 
   if (urlDatabase[shortURL].userID === user_id) {
     urlDatabase[shortURL] = { longURL: newURL, userID: user_id };
     res.redirect("/urls");
   } else {
-    const status = 403;
-    const error = 'Forbidden, you are not the creator of this short URL.';
-    renderError(res, user_id, status, error);
+    renderError(res, user_id, 403, 'Forbidden, you are not the creator of this short URL.');
   }
 });
 
@@ -119,9 +120,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     delete urlDatabase[shortURL];
     res.redirect("/urls");
   } else {
-    const status = 403;
-    const error = 'Forbidden, you are not the creator of this short URL.';
-    renderError(res, user_id, status, error);
+    renderError(res, user_id, 403, 'Forbidden, you are not the creator of this short URL.');
   }
 });
 
@@ -132,9 +131,7 @@ app.get("/u/:shortURL", (req, res) => {
     res.redirect(longURL);
   } else {
     const user_id = req.session.user_id;
-    const status = 404;
-    const error = 'Not Found, the URL does not exist.';
-    renderError(res, user_id, status, error);
+    renderError(res, user_id, 404, 'Not Found, the URL does not exist.');
   }
 
 });
@@ -143,8 +140,8 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/login", (req, res) => {
   const user_id = users[req.session.user_id];
-  if(user_id) {
-    res.redirect('/urls');
+  if (user_id) {
+    res.redirect("/urls");
   } else {
     const templateVars = { user_id };
     res.render("login", templateVars);
@@ -158,18 +155,16 @@ app.post("/login", (req, res) => {
   
   if (!user) {
     const user_id = users[req.session.user_id];
-    const status = 403;
-    const error = 'Forbidden, please enter a valid email and password.';
-    renderError(res, user_id, status, error);
+    renderError(res, user_id, 403, 'Forbidden, please enter a valid email and password.');
   }
   
   req.session.user_id = user.id;
-  res.redirect('/urls');
+  res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
   req.session.user_id = null;
-  res.redirect('/urls');
+  res.redirect("/urls");
 });
 
 // REGISTER ROUTES
@@ -177,10 +172,9 @@ app.post("/logout", (req, res) => {
 app.get("/register", (req, res) => {
   const user_id = users[req.session.user_id];
   if (user_id) {
-    res.redirect('/urls');
+    res.redirect("/urls");
   } else {
-    const templateVars = { user_id };
-    res.render("register", templateVars);
+    res.render("register", { user_id });
   }
 });
 
@@ -194,20 +188,16 @@ app.post("/register", (req, res) => {
 
   if (badInput) {
     const user_id = users[req.session.user_id];
-    const status = 400;
-    const error = 'Bad Request, please enter a valid email and password.';
-    renderError(res, user_id, status, error);
+    renderError(res, user_id, 400, 'Bad Request, please enter a valid email and password.');
   }
 
   if (!user) {
     users[id] = { id, email, password: hashedPassword };
     req.session.user_id = id;
-    res.redirect('/urls');
+    res.redirect("/urls");
   } else {
     const user_id = users[req.session.user_id];
-    const status = 400;
-    const error = 'Bad Request, user already exists.';
-    renderError(res, user_id, status, error);
+    renderError(res, user_id, 400, 'Bad Request, user already exists.');
   }
 
 });

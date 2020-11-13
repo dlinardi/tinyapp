@@ -10,6 +10,7 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
 
+      <!-- check if user is logged in -->
       <% if (user_id) { %>
         <form class="form-inline ml-auto" method="POST" action="/logout">
           <div class="form-row">

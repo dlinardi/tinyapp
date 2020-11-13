@@ -10,14 +10,14 @@
 
   <%- include('partials/_header') %>
 
-  <div class="card text-center">
-
+    <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
         <h3 class="card-text">Short URL: <a target="_blank" href="/u/<%= shortURL %>"><%= shortURL %></a></h3>
       </div>
-
+    
+      <!-- check if user is logged in -->
       <% if (user_id) { %>
         <div class="card-header"></div>
         <div class="card-body">
